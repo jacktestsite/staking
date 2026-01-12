@@ -923,12 +923,12 @@
                 // Check if this is TRX and show Tronsave specifically
                 if (token === 'TRX') {
                     defiGrid.innerHTML = `
-                        <div class="defi-card">
+                        <div class="defi-card row-estimate">
                             <div class="defi-card-header">
                                 <div class="defi-protocol">
                                     <div class="defi-protocol-logo">TS</div>
                                     <div>
-                                        <div class="defi-protocol-name">Tronsave</div>
+                                        <div class="defi-protocol-name">Tronsave <span class="data-badge data-badge-est" style="font-size: 9px; vertical-align: middle;">EST</span></div>
                                         <div class="defi-protocol-chain">TRON Network</div>
                                     </div>
                                 </div>
@@ -970,13 +970,20 @@
                 return;
             }
 
-            defiGrid.innerHTML = data.map(item => `
-                <div class="defi-card">
+            defiGrid.innerHTML = data.map(item => {
+                const isLive = item.isLive !== false; // Default to live for Pendle/DefiLlama data
+                const badge = isLive 
+                    ? '<span class="data-badge data-badge-live" style="font-size: 9px; vertical-align: middle;">LIVE</span>'
+                    : '<span class="data-badge data-badge-est" style="font-size: 9px; vertical-align: middle;">EST</span>';
+                const cardClass = isLive ? '' : 'row-estimate';
+                
+                return `
+                <div class="defi-card ${cardClass}">
                     <div class="defi-card-header">
                         <div class="defi-protocol">
                             <div class="defi-protocol-logo">${item.protocol.substring(0, 2).toUpperCase()}</div>
                             <div>
-                                <div class="defi-protocol-name">${item.protocol}</div>
+                                <div class="defi-protocol-name">${item.protocol} ${badge}</div>
                                 <div class="defi-protocol-chain">${item.chain}</div>
                             </div>
                         </div>
@@ -1004,7 +1011,7 @@
                         </div>
                     </div>
                 </div>
-            `).join('');
+            `}).join('');
         }
 
         function renderReferenceRate(data) {
@@ -1222,7 +1229,8 @@
                     maturity: market.expiry ? new Date(market.expiry).toLocaleDateString('en-US', { month: 'short', year: 'numeric' }) : '—',
                     tvl: market.tvl,
                     underlying: market.name,
-                    notes: `Underlying APY: ${market.underlyingApy}`
+                    notes: `Underlying APY: ${market.underlyingApy}`,
+                    isLive: true
                 });
             });
             
@@ -1248,11 +1256,12 @@
                         maturity: '—',
                         tvl: pool.tvl,
                         underlying: pool.symbol,
-                        notes: notes
+                        notes: notes,
+                        isLive: true
                     });
                 });
             
-            // Special case: Add Tronsave for TRX
+            // Special case: Add Tronsave for TRX (estimated, not live)
             if (token === 'TRX') {
                 defiOpportunities.unshift({
                     protocol: 'Tronsave',
@@ -1262,7 +1271,8 @@
                     maturity: '—',
                     tvl: '$15M',
                     underlying: 'TRX',
-                    notes: 'Lend staked TRX energy to other users. Min: 50,000 TRX'
+                    notes: 'Lend staked TRX energy to other users. Min: 50,000 TRX',
+                    isLive: false
                 });
             }
             
@@ -1288,6 +1298,7 @@
             // Find best flexible and locked rates from Bybit
             let bybitFlexible = null;
             let bybitLocked = null;
+            let lockedDuration = null;
             
             bybitRates.forEach(rate => {
                 const apr = rate.apr;
@@ -1295,8 +1306,27 @@
                     bybitFlexible = apr;
                 } else if (rate.category === 'OnChain') {
                     bybitLocked = apr;
+                    // OnChain products may have duration info
+                    if (rate.duration) {
+                        lockedDuration = rate.duration + ' days';
+                    }
                 }
             });
+            
+            // Determine lock period text based on what products are available
+            let lockPeriodText = 'Flexible';
+            let productText = 'Savings';
+            
+            if (bybitFlexible && bybitLocked) {
+                lockPeriodText = 'Flexible / ' + (lockedDuration || 'Fixed');
+                productText = 'Savings / On-Chain';
+            } else if (bybitFlexible && !bybitLocked) {
+                lockPeriodText = 'Flexible';
+                productText = 'Flexible Savings';
+            } else if (!bybitFlexible && bybitLocked) {
+                lockPeriodText = lockedDuration || 'Fixed';
+                productText = 'On-Chain Earn';
+            }
             
             // Update the static data with live Bybit rates and mark data sources
             const updatedCex = staticData.map(row => {
@@ -1307,6 +1337,8 @@
                             ...row,
                             flexible: bybitFlexible || '—',
                             locked: bybitLocked || '—',
+                            lockPeriod: lockPeriodText,
+                            product: productText,
                             isLive: true,
                             notes: 'Real-time from Bybit API'
                         };
@@ -1316,6 +1348,8 @@
                             ...row,
                             flexible: '—',
                             locked: '—',
+                            lockPeriod: '—',
+                            product: '—',
                             isLive: true,
                             notes: 'Not available on Bybit Earn'
                         };
