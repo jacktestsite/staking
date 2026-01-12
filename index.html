@@ -1,0 +1,1347 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Crypto Staking & Earn Rates Comparison</title>
+    <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&family=Space+Grotesk:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --bg-primary: #0a0b0d;
+            --bg-secondary: #12141a;
+            --bg-tertiary: #1a1d24;
+            --bg-card: #16181f;
+            --border-color: #2a2d36;
+            --text-primary: #f0f2f5;
+            --text-secondary: #8b8f99;
+            --text-muted: #5c5f66;
+            --accent-green: #00d68f;
+            --accent-green-dim: rgba(0, 214, 143, 0.15);
+            --accent-blue: #00a3ff;
+            --accent-blue-dim: rgba(0, 163, 255, 0.15);
+            --accent-purple: #a855f7;
+            --accent-purple-dim: rgba(168, 85, 247, 0.15);
+            --accent-orange: #ff9f43;
+            --accent-orange-dim: rgba(255, 159, 67, 0.15);
+            --accent-red: #ff6b6b;
+            --warning: #ffc107;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Space Grotesk', sans-serif;
+            background: var(--bg-primary);
+            color: var(--text-primary);
+            min-height: 100vh;
+            line-height: 1.5;
+        }
+
+        .container {
+            max-width: 1600px;
+            margin: 0 auto;
+            padding: 24px;
+        }
+
+        /* Header */
+        .header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 20px 0 32px;
+            border-bottom: 1px solid var(--border-color);
+            margin-bottom: 32px;
+        }
+
+        .header h1 {
+            font-size: 24px;
+            font-weight: 600;
+        }
+
+        .last-updated {
+            font-size: 13px;
+            color: var(--text-muted);
+            font-family: 'JetBrains Mono', monospace;
+        }
+
+        /* Token Selector */
+        .token-selector {
+            display: flex;
+            align-items: center;
+            gap: 16px;
+            margin-bottom: 32px;
+        }
+
+        .token-selector label {
+            font-size: 14px;
+            color: var(--text-secondary);
+            font-weight: 500;
+        }
+
+        .token-dropdown {
+            position: relative;
+        }
+
+        .token-dropdown select {
+            appearance: none;
+            background: var(--bg-secondary);
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            padding: 12px 48px 12px 16px;
+            font-size: 16px;
+            font-weight: 600;
+            color: var(--text-primary);
+            font-family: 'Space Grotesk', sans-serif;
+            cursor: pointer;
+            min-width: 160px;
+            transition: all 0.2s;
+        }
+
+        .token-dropdown select:hover {
+            border-color: var(--accent-blue);
+        }
+
+        .token-dropdown select:focus {
+            outline: none;
+            border-color: var(--accent-blue);
+            box-shadow: 0 0 0 3px var(--accent-blue-dim);
+        }
+
+        .token-dropdown::after {
+            content: '▼';
+            position: absolute;
+            right: 16px;
+            top: 50%;
+            transform: translateY(-50%);
+            font-size: 10px;
+            color: var(--text-muted);
+            pointer-events: none;
+        }
+
+        .refresh-btn {
+            background: var(--bg-tertiary);
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            padding: 12px 20px;
+            font-size: 14px;
+            font-weight: 500;
+            color: var(--text-primary);
+            cursor: pointer;
+            transition: all 0.2s;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .refresh-btn:hover {
+            background: var(--bg-secondary);
+            border-color: var(--accent-green);
+        }
+
+        .refresh-btn.loading {
+            opacity: 0.6;
+            pointer-events: none;
+        }
+
+        .refresh-btn svg {
+            width: 16px;
+            height: 16px;
+        }
+
+        .refresh-btn.loading svg {
+            animation: spin 1s linear infinite;
+        }
+
+        @keyframes spin {
+            from { transform: rotate(0deg); }
+            to { transform: rotate(360deg); }
+        }
+
+        /* Section Headers */
+        .section-header {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            margin-bottom: 20px;
+        }
+
+        .section-header h2 {
+            font-size: 18px;
+            font-weight: 600;
+        }
+
+        .section-header .badge {
+            font-size: 11px;
+            font-weight: 600;
+            padding: 4px 10px;
+            border-radius: 20px;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .badge-cex {
+            background: var(--accent-blue-dim);
+            color: var(--accent-blue);
+        }
+
+        .badge-defi {
+            background: var(--accent-purple-dim);
+            color: var(--accent-purple);
+        }
+
+        .badge-reference {
+            background: var(--accent-orange-dim);
+            color: var(--accent-orange);
+        }
+
+        /* Data source badges (LIVE vs EST) */
+        .data-badge {
+            font-size: 9px;
+            font-weight: 700;
+            padding: 2px 5px;
+            border-radius: 3px;
+            margin-left: 8px;
+            font-family: 'JetBrains Mono', monospace;
+            letter-spacing: 0.5px;
+            vertical-align: middle;
+        }
+
+        .data-badge-live {
+            background: var(--accent-green);
+            color: var(--bg-primary);
+        }
+
+        .data-badge-est {
+            background: var(--bg-tertiary);
+            color: var(--text-muted);
+            border: 1px solid var(--border-color);
+        }
+
+        .row-estimate {
+            opacity: 0.7;
+        }
+
+        .row-estimate:hover {
+            opacity: 1;
+        }
+
+        /* Tables */
+        .rates-section {
+            margin-bottom: 40px;
+        }
+
+        .rates-table {
+            width: 100%;
+            border-collapse: collapse;
+            background: var(--bg-card);
+            border-radius: 12px;
+            overflow: hidden;
+            border: 1px solid var(--border-color);
+        }
+
+        .rates-table th {
+            background: var(--bg-tertiary);
+            padding: 14px 16px;
+            text-align: left;
+            font-size: 12px;
+            font-weight: 600;
+            color: var(--text-muted);
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            border-bottom: 1px solid var(--border-color);
+        }
+
+        .rates-table td {
+            padding: 16px;
+            border-bottom: 1px solid var(--border-color);
+            font-size: 14px;
+        }
+
+        .rates-table tr:last-child td {
+            border-bottom: none;
+        }
+
+        .rates-table tr:hover td {
+            background: rgba(255, 255, 255, 0.02);
+        }
+
+        .exchange-name {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            font-weight: 500;
+        }
+
+        .exchange-logo {
+            width: 28px;
+            height: 28px;
+            border-radius: 6px;
+            background: var(--bg-tertiary);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 12px;
+            font-weight: 700;
+            color: var(--text-secondary);
+        }
+
+        .rate-value {
+            font-family: 'JetBrains Mono', monospace;
+            font-weight: 600;
+            font-size: 15px;
+        }
+
+        .rate-positive {
+            color: var(--accent-green);
+        }
+
+        .rate-neutral {
+            color: var(--text-secondary);
+        }
+
+        .rate-na {
+            color: var(--text-muted);
+            font-style: italic;
+        }
+
+        .rate-high {
+            background: var(--accent-green-dim);
+            color: var(--accent-green);
+            padding: 4px 8px;
+            border-radius: 4px;
+        }
+
+        .product-type {
+            font-size: 12px;
+            color: var(--text-muted);
+            margin-top: 2px;
+        }
+
+        .lock-period {
+            font-size: 13px;
+            color: var(--text-secondary);
+        }
+
+        .lock-flexible {
+            color: var(--accent-green);
+        }
+
+        .notes {
+            font-size: 12px;
+            color: var(--text-muted);
+            max-width: 200px;
+        }
+
+        /* Reference Rate Card */
+        .reference-card {
+            background: linear-gradient(135deg, rgba(255, 159, 67, 0.1), rgba(255, 159, 67, 0.02));
+            border: 1px solid rgba(255, 159, 67, 0.3);
+            border-radius: 12px;
+            padding: 20px 24px;
+            margin-bottom: 32px;
+            display: flex;
+            align-items: center;
+            gap: 24px;
+        }
+
+        .reference-card .ref-label {
+            font-size: 13px;
+            color: var(--text-muted);
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            margin-bottom: 4px;
+        }
+
+        .reference-card .ref-name {
+            font-size: 16px;
+            font-weight: 600;
+            color: var(--accent-orange);
+        }
+
+        .reference-card .ref-rate {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 28px;
+            font-weight: 700;
+            color: var(--text-primary);
+        }
+
+        .reference-card .ref-rate span {
+            font-size: 16px;
+            color: var(--text-muted);
+        }
+
+        .reference-card .ref-description {
+            font-size: 13px;
+            color: var(--text-secondary);
+            max-width: 400px;
+        }
+
+        /* DeFi Opportunities */
+        .defi-card {
+            background: var(--bg-card);
+            border: 1px solid var(--border-color);
+            border-radius: 12px;
+            padding: 20px;
+            margin-bottom: 16px;
+            transition: all 0.2s;
+        }
+
+        .defi-card:hover {
+            border-color: var(--accent-purple);
+        }
+
+        .defi-card-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            margin-bottom: 16px;
+        }
+
+        .defi-protocol {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .defi-protocol-logo {
+            width: 36px;
+            height: 36px;
+            border-radius: 8px;
+            background: var(--accent-purple-dim);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 14px;
+            font-weight: 700;
+            color: var(--accent-purple);
+        }
+
+        .defi-protocol-name {
+            font-weight: 600;
+            font-size: 16px;
+        }
+
+        .defi-protocol-chain {
+            font-size: 12px;
+            color: var(--text-muted);
+        }
+
+        .defi-apy {
+            text-align: right;
+        }
+
+        .defi-apy-value {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 24px;
+            font-weight: 700;
+            color: var(--accent-green);
+        }
+
+        .defi-apy-label {
+            font-size: 11px;
+            color: var(--text-muted);
+            text-transform: uppercase;
+        }
+
+        .defi-details {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+            gap: 16px;
+            padding-top: 16px;
+            border-top: 1px solid var(--border-color);
+        }
+
+        .defi-detail {
+            font-size: 13px;
+        }
+
+        .defi-detail-label {
+            color: var(--text-muted);
+            margin-bottom: 4px;
+        }
+
+        .defi-detail-value {
+            font-weight: 500;
+            color: var(--text-primary);
+        }
+
+        /* Loading State */
+        .loading-skeleton {
+            background: linear-gradient(90deg, var(--bg-tertiary) 25%, var(--bg-secondary) 50%, var(--bg-tertiary) 75%);
+            background-size: 200% 100%;
+            animation: shimmer 1.5s infinite;
+            border-radius: 4px;
+            height: 20px;
+        }
+
+        @keyframes shimmer {
+            0% { background-position: 200% 0; }
+            100% { background-position: -200% 0; }
+        }
+
+        /* No Data State */
+        .no-data {
+            text-align: center;
+            padding: 40px;
+            color: var(--text-muted);
+        }
+
+        .no-data-icon {
+            font-size: 48px;
+            margin-bottom: 16px;
+            opacity: 0.5;
+        }
+
+        /* Info Tooltip */
+        .info-icon {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            width: 16px;
+            height: 16px;
+            border-radius: 50%;
+            background: var(--bg-tertiary);
+            font-size: 10px;
+            color: var(--text-muted);
+            cursor: help;
+            margin-left: 6px;
+        }
+
+        /* Grid Layout for Cards */
+        .defi-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(350px, 1fr));
+            gap: 20px;
+        }
+
+        /* Status Indicator */
+        .status-dot {
+            display: inline-block;
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            margin-right: 8px;
+        }
+
+        .status-live {
+            background: var(--accent-green);
+            box-shadow: 0 0 8px var(--accent-green);
+        }
+
+        .status-stale {
+            background: var(--warning);
+        }
+
+        .status-error {
+            background: var(--accent-red);
+        }
+
+        /* Footer */
+        .footer {
+            margin-top: 48px;
+            padding-top: 24px;
+            border-top: 1px solid var(--border-color);
+            font-size: 12px;
+            color: var(--text-muted);
+        }
+
+        .rate-methodology {
+            background: var(--bg-secondary);
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            padding: 12px 16px;
+            margin-bottom: 16px;
+            font-size: 13px;
+            color: var(--text-secondary);
+        }
+
+        .rate-methodology strong {
+            color: var(--text-primary);
+        }
+
+        .footer-sources {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 16px;
+            margin-bottom: 12px;
+        }
+
+        .footer-sources a {
+            color: var(--text-secondary);
+            text-decoration: none;
+        }
+
+        .footer-sources a:hover {
+            color: var(--accent-blue);
+        }
+
+        /* Responsive */
+        @media (max-width: 768px) {
+            .container {
+                padding: 16px;
+            }
+
+            .header {
+                flex-direction: column;
+                align-items: flex-start;
+                gap: 12px;
+            }
+
+            .token-selector {
+                flex-wrap: wrap;
+            }
+
+            .reference-card {
+                flex-direction: column;
+                align-items: flex-start;
+            }
+
+            .rates-table {
+                display: block;
+                overflow-x: auto;
+            }
+
+            .defi-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header class="header">
+            <h1>Staking & Earn Rates Comparison</h1>
+            <div class="last-updated">
+                <span class="status-dot status-live"></span>
+                Last updated: <span id="lastUpdated">Loading...</span>
+            </div>
+        </header>
+
+        <div class="token-selector">
+            <label for="tokenSelect">Select Token:</label>
+            <div class="token-dropdown">
+                <select id="tokenSelect">
+                    <option value="ADA">ADA</option>
+                    <option value="AR">AR</option>
+                    <option value="ATOM">ATOM</option>
+                    <option value="AVAX">AVAX</option>
+                    <option value="BTC">BTC</option>
+                    <option value="DOGE">DOGE</option>
+                    <option value="DOT">DOT</option>
+                    <option value="DYDX">DYDX</option>
+                    <option value="EIGEN">EIGEN</option>
+                    <option value="ETH" selected>ETH</option>
+                    <option value="LINK">LINK</option>
+                    <option value="MNT">MNT</option>
+                    <option value="NEAR">NEAR</option>
+                    <option value="POL">POL</option>
+                    <option value="SHIB">SHIB</option>
+                    <option value="SOL">SOL</option>
+                    <option value="TRX">TRX</option>
+                    <option value="UNI">UNI</option>
+                    <option value="WLD">WLD</option>
+                    <option value="XRP">XRP</option>
+                </select>
+            </div>
+            <button class="refresh-btn" id="refreshBtn">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <path d="M23 4v6h-6M1 20v-6h6M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"/>
+                </svg>
+                Refresh Rates
+            </button>
+        </div>
+
+        <!-- Reference Rate Section -->
+        <div id="referenceSection" class="reference-card" style="display: none;">
+            <div>
+                <div class="ref-label">Network Reference Rate</div>
+                <div class="ref-name" id="refName">ETH.STORE®</div>
+            </div>
+            <div>
+                <div class="ref-rate"><span id="refRate">—</span><span> APY</span></div>
+            </div>
+            <div class="ref-description" id="refDescription">
+                The average daily return across all Ethereum validators on the beacon chain.
+            </div>
+        </div>
+
+        <!-- CEX Staking Rates -->
+        <section class="rates-section">
+            <div class="section-header">
+                <h2>Exchange Staking & Earn Rates</h2>
+                <span class="badge badge-cex">CEX</span>
+            </div>
+            <table class="rates-table">
+                <thead>
+                    <tr>
+                        <th>Exchange</th>
+                        <th>Flexible APY</th>
+                        <th>Locked APY</th>
+                        <th>Lock Period</th>
+                        <th>Product Type</th>
+                        <th>Notes</th>
+                    </tr>
+                </thead>
+                <tbody id="cexTableBody">
+                    <tr>
+                        <td colspan="6">
+                            <div class="loading-skeleton" style="width: 100%;"></div>
+                        </td>
+                    </tr>
+                </tbody>
+            </table>
+        </section>
+
+        <!-- DeFi Alternatives -->
+        <section class="rates-section">
+            <div class="section-header">
+                <h2>DeFi Yield Opportunities</h2>
+                <span class="badge badge-defi">DeFi</span>
+            </div>
+            <div class="defi-grid" id="defiGrid">
+                <div class="defi-card">
+                    <div class="loading-skeleton" style="height: 150px;"></div>
+                </div>
+            </div>
+        </section>
+
+        <footer class="footer">
+            <div class="rate-methodology">
+                <strong>Methodology:</strong> Rates shown are standard rates only. Promotional/tiered rates (e.g. "10% on first 0.1 BTC, 0.1% thereafter") are excluded — only the rate applicable to larger positions is displayed.
+                <br><br>
+                <span class="data-badge data-badge-live" style="vertical-align: baseline;">LIVE</span> Real-time data from API &nbsp;&nbsp;
+                <span class="data-badge data-badge-est" style="vertical-align: baseline;">EST</span> Estimated/sample rates — verify on exchange before use
+            </div>
+            <div class="footer-sources">
+                <span>Data sources:</span>
+                <a href="https://www.binance.com/en/earn" target="_blank">Binance</a>
+                <a href="https://www.okx.com/earn" target="_blank">OKX</a>
+                <a href="https://www.bybit.com/earn" target="_blank">Bybit</a>
+                <a href="https://www.kraken.com/features/staking" target="_blank">Kraken</a>
+                <a href="https://www.coinbase.com/earn" target="_blank">Coinbase</a>
+                <a href="https://crypto.com/earn" target="_blank">Crypto.com</a>
+                <a href="https://beaconcha.in/ethstore" target="_blank">beaconcha.in</a>
+                <a href="https://app.pendle.finance" target="_blank">Pendle</a>
+                <a href="https://defillama.com/yields" target="_blank">DefiLlama</a>
+                <a href="https://tronsave.io" target="_blank">Tronsave</a>
+            </div>
+            <p>Rates are indicative and subject to change. Always verify current rates on the respective platforms before making decisions.</p>
+        </footer>
+    </div>
+
+    <script>
+        // API Configuration
+        const WORKER_URL = 'https://staking.jac-ob.workers.dev';
+        
+        // IMPORTANT: Rate filtering methodology
+        // - Only display STANDARD rates, not promotional/introductory rates
+        // - If an exchange offers tiered rates (e.g. "10% on first 0.1 BTC, 0.1% on remainder"),
+        //   we display the rate applicable to larger positions (0.1% in this example)
+        // - This ensures rates are comparable for meaningful position sizes
+        // - Promotional time-limited bonuses are also excluded
+        //
+        const exchangeData = {
+            binance: { name: 'Binance', logo: 'BN' },
+            okx: { name: 'OKX', logo: 'OK' },
+            bybit: { name: 'Bybit', logo: 'BY' },
+            kraken: { name: 'Kraken', logo: 'KR' },
+            coinbase: { name: 'Coinbase', logo: 'CB' },
+            cryptocom: { name: 'Crypto.com', logo: 'CR' }
+        };
+
+        // Sample rates data structure - would be populated from APIs
+        const sampleRates = {
+            ETH: {
+                referenceRate: { name: 'ETH.STORE®', rate: '3.12%', description: 'Average daily return across all Ethereum validators (beaconcha.in)' },
+                cex: [
+                    { exchange: 'binance', flexible: '2.45%', locked: '3.20%', lockPeriod: '90 days', product: 'Simple Earn', notes: 'Flexible & Locked products' },
+                    { exchange: 'okx', flexible: '2.30%', locked: '3.10%', lockPeriod: '60-120 days', product: 'Earn', notes: 'On-chain staking available' },
+                    { exchange: 'bybit', flexible: '2.15%', locked: '3.05%', lockPeriod: '30-90 days', product: 'Savings', notes: 'Flexible redemption' },
+                    { exchange: 'kraken', flexible: '2.50%', locked: '—', lockPeriod: 'Flexible', product: 'Staking', notes: 'Unbonding 5-7 days' },
+                    { exchange: 'coinbase', flexible: '2.07%', locked: '—', lockPeriod: 'Flexible', product: 'Staking', notes: 'Net after 25% commission' },
+                    { exchange: 'cryptocom', flexible: '2.00%', locked: '2.50%', lockPeriod: '1-3 months', product: 'Earn', notes: 'Higher rates with CRO stake' }
+                ],
+                defi: [
+                    { protocol: 'Pendle', chain: 'Ethereum', apy: '4.82%', type: 'Fixed Yield (PT)', maturity: 'Jun 2026', tvl: '$245M', underlying: 'stETH', notes: 'Lock in fixed rate by buying PT' },
+                    { protocol: 'Pendle', chain: 'Ethereum', apy: '8.5%', type: 'LP Yield', maturity: 'Jun 2026', tvl: '$180M', underlying: 'weETH', notes: 'Provide liquidity + PENDLE rewards' },
+                    { protocol: 'Lido', chain: 'Ethereum', apy: '3.10%', type: 'Liquid Staking', maturity: '—', tvl: '$22B', underlying: 'stETH', notes: 'Liquid staking derivative' },
+                    { protocol: 'Rocket Pool', chain: 'Ethereum', apy: '2.95%', type: 'Liquid Staking', maturity: '—', tvl: '$2.8B', underlying: 'rETH', notes: 'Decentralized staking' }
+                ]
+            },
+            BTC: {
+                referenceRate: null,
+                cex: [
+                    { exchange: 'binance', flexible: '0.50%', locked: '1.20%', lockPeriod: '90-120 days', product: 'Simple Earn', notes: 'Limited availability' },
+                    { exchange: 'okx', flexible: '0.40%', locked: '1.00%', lockPeriod: '30-90 days', product: 'Savings', notes: 'Subscription limits apply' },
+                    { exchange: 'bybit', flexible: '0.35%', locked: '0.90%', lockPeriod: '30-60 days', product: 'Savings', notes: 'Flexible & Fixed' },
+                    { exchange: 'kraken', flexible: '0.25%', locked: '—', lockPeriod: 'Flexible', product: 'Opt-in Rewards', notes: 'Variable rates' },
+                    { exchange: 'coinbase', flexible: '—', locked: '—', lockPeriod: '—', product: '—', notes: 'Not available' },
+                    { exchange: 'cryptocom', flexible: '0.40%', locked: '1.50%', lockPeriod: '1-3 months', product: 'Earn', notes: 'Tiered by CRO stake' }
+                ],
+                defi: [
+                    { protocol: 'Pendle', chain: 'Ethereum', apy: '3.2%', type: 'Fixed Yield (PT)', maturity: 'Mar 2026', tvl: '$85M', underlying: 'eBTC', notes: 'Fixed yield on wrapped BTC' },
+                    { protocol: 'Lombard', chain: 'Ethereum', apy: '2.8%', type: 'Restaking', maturity: '—', tvl: '$1.2B', underlying: 'LBTC', notes: 'BTC restaking yield' }
+                ]
+            },
+            TRX: {
+                referenceRate: { name: 'TRON DPoS', rate: '4.47%', description: 'Average validator staking reward on TRON network' },
+                cex: [
+                    { exchange: 'binance', flexible: '3.00%', locked: '5.00%', lockPeriod: '90 days', product: 'Locked Staking', notes: 'On-chain staking' },
+                    { exchange: 'okx', flexible: '2.80%', locked: '4.50%', lockPeriod: '30-90 days', product: 'Staking', notes: 'Flexible & Locked' },
+                    { exchange: 'bybit', flexible: '2.50%', locked: '4.20%', lockPeriod: '30-60 days', product: 'Savings', notes: 'Auto-compound' },
+                    { exchange: 'kraken', flexible: '3.34%', locked: '—', lockPeriod: 'Flexible', product: 'Staking', notes: 'On-chain staking rewards' },
+                    { exchange: 'coinbase', flexible: '—', locked: '—', lockPeriod: '—', product: '—', notes: 'Not available' },
+                    { exchange: 'cryptocom', flexible: '2.50%', locked: '4.00%', lockPeriod: '1-3 months', product: 'Earn', notes: 'CRO stake boost' }
+                ],
+                defi: [
+                    { protocol: 'Tronsave', chain: 'TRON', apy: '21-25%', type: 'Energy Lending', maturity: '—', tvl: '$15M', underlying: 'TRX', notes: 'Lend staked energy to other users' },
+                    { protocol: 'JustLend DAO', chain: 'TRON', apy: '5.2%', type: 'Lending', maturity: '—', tvl: '$4.5B', underlying: 'TRX', notes: 'Supply TRX to lending pool' }
+                ]
+            },
+            SOL: {
+                referenceRate: { name: 'Solana Network', rate: '7.2%', description: 'Average native staking reward on Solana' },
+                cex: [
+                    { exchange: 'binance', flexible: '5.50%', locked: '7.80%', lockPeriod: '90-120 days', product: 'SOL Staking', notes: 'Native staking' },
+                    { exchange: 'okx', flexible: '5.20%', locked: '7.50%', lockPeriod: '60-90 days', product: 'Staking', notes: 'On-chain delegation' },
+                    { exchange: 'bybit', flexible: '5.00%', locked: '7.20%', lockPeriod: '30-90 days', product: 'Savings', notes: 'Flexible redemption' },
+                    { exchange: 'kraken', flexible: '6.00%', locked: '—', lockPeriod: 'Flexible', product: 'Staking', notes: '~2 day unbonding' },
+                    { exchange: 'coinbase', flexible: '5.10%', locked: '—', lockPeriod: 'Flexible', product: 'Staking', notes: 'Net after commission' },
+                    { exchange: 'cryptocom', flexible: '4.50%', locked: '6.00%', lockPeriod: '1-3 months', product: 'Earn', notes: 'CRO boost available' }
+                ],
+                defi: [
+                    { protocol: 'Marinade', chain: 'Solana', apy: '7.8%', type: 'Liquid Staking', maturity: '—', tvl: '$1.5B', underlying: 'mSOL', notes: 'Decentralized stake distribution' },
+                    { protocol: 'Jito', chain: 'Solana', apy: '8.2%', type: 'Liquid Staking', maturity: '—', tvl: '$2.1B', underlying: 'JitoSOL', notes: 'MEV-boosted rewards' }
+                ]
+            },
+            ATOM: {
+                referenceRate: { name: 'Cosmos Hub', rate: '14.5%', description: 'Average staking reward on Cosmos Hub' },
+                cex: [
+                    { exchange: 'binance', flexible: '8.00%', locked: '12.50%', lockPeriod: '90-120 days', product: 'Locked Staking', notes: 'On-chain delegation' },
+                    { exchange: 'okx', flexible: '7.50%', locked: '11.80%', lockPeriod: '30-90 days', product: 'Staking', notes: '21-day unbonding' },
+                    { exchange: 'bybit', flexible: '7.20%', locked: '11.00%', lockPeriod: '30-60 days', product: 'Savings', notes: 'Auto-compound' },
+                    { exchange: 'kraken', flexible: '9.00%', locked: '—', lockPeriod: 'Flexible', product: 'Staking', notes: 'Unstaking ~21 days' },
+                    { exchange: 'coinbase', flexible: '8.20%', locked: '—', lockPeriod: 'Flexible', product: 'Staking', notes: 'After commission' },
+                    { exchange: 'cryptocom', flexible: '7.50%', locked: '10.00%', lockPeriod: '1-3 months', product: 'Earn', notes: 'CRO boost' }
+                ],
+                defi: [
+                    { protocol: 'Stride', chain: 'Cosmos', apy: '15.2%', type: 'Liquid Staking', maturity: '—', tvl: '$120M', underlying: 'stATOM', notes: 'Use stATOM in DeFi while staked' }
+                ]
+            },
+            DOT: {
+                referenceRate: { name: 'Polkadot Network', rate: '11.5%', description: 'Average native staking reward on Polkadot' },
+                cex: [
+                    { exchange: 'binance', flexible: '8.50%', locked: '11.00%', lockPeriod: '90-120 days', product: 'DOT Staking', notes: '28-day unbonding' },
+                    { exchange: 'okx', flexible: '8.00%', locked: '10.50%', lockPeriod: '30-90 days', product: 'Staking', notes: 'Native staking' },
+                    { exchange: 'bybit', flexible: '7.50%', locked: '10.00%', lockPeriod: '30-60 days', product: 'Savings', notes: 'Flexible options' },
+                    { exchange: 'kraken', flexible: '9.00%', locked: '—', lockPeriod: 'Flexible', product: 'Staking', notes: 'On-chain staking' },
+                    { exchange: 'coinbase', flexible: '8.50%', locked: '—', lockPeriod: 'Flexible', product: 'Staking', notes: 'Net after fees' },
+                    { exchange: 'cryptocom', flexible: '7.00%', locked: '9.00%', lockPeriod: '1-3 months', product: 'Earn', notes: 'CRO boost' }
+                ],
+                defi: [
+                    { protocol: 'Acala', chain: 'Polkadot', apy: '12.5%', type: 'Liquid Staking', maturity: '—', tvl: '$80M', underlying: 'LDOT', notes: 'Liquid DOT staking' }
+                ]
+            }
+        };
+
+        // Default/fallback data for tokens without specific data
+        const defaultRates = {
+            cex: [
+                { exchange: 'binance', flexible: '—', locked: '—', lockPeriod: '—', product: 'Simple Earn', notes: 'Check availability' },
+                { exchange: 'okx', flexible: '—', locked: '—', lockPeriod: '—', product: 'Earn', notes: 'Check availability' },
+                { exchange: 'bybit', flexible: '—', locked: '—', lockPeriod: '—', product: 'Savings', notes: 'Check availability' },
+                { exchange: 'kraken', flexible: '—', locked: '—', lockPeriod: '—', product: 'Earn', notes: 'Check availability' },
+                { exchange: 'coinbase', flexible: '—', locked: '—', lockPeriod: '—', product: 'Earn', notes: 'Check availability' },
+                { exchange: 'cryptocom', flexible: '—', locked: '—', lockPeriod: '—', product: 'Earn', notes: 'Check availability' }
+            ],
+            defi: []
+        };
+
+        // DOM Elements
+        const tokenSelect = document.getElementById('tokenSelect');
+        const refreshBtn = document.getElementById('refreshBtn');
+        const lastUpdated = document.getElementById('lastUpdated');
+        const cexTableBody = document.getElementById('cexTableBody');
+        const defiGrid = document.getElementById('defiGrid');
+        const referenceSection = document.getElementById('referenceSection');
+        const refName = document.getElementById('refName');
+        const refRate = document.getElementById('refRate');
+        const refDescription = document.getElementById('refDescription');
+
+        // Render functions
+        function renderCexTable(data) {
+            if (!data || data.length === 0) {
+                cexTableBody.innerHTML = `
+                    <tr>
+                        <td colspan="6" class="no-data">
+                            <div class="no-data-icon">📊</div>
+                            <p>No exchange data available for this token</p>
+                        </td>
+                    </tr>
+                `;
+                return;
+            }
+
+            cexTableBody.innerHTML = data.map(row => {
+                const exchange = exchangeData[row.exchange] || { name: row.exchange, logo: row.exchange.substring(0, 2).toUpperCase() };
+                const isLive = row.isLive === true;
+                const badge = isLive 
+                    ? '<span class="data-badge data-badge-live">LIVE</span>' 
+                    : '<span class="data-badge data-badge-est">EST</span>';
+                const rowClass = isLive ? '' : 'row-estimate';
+                
+                return `
+                    <tr class="${rowClass}">
+                        <td>
+                            <div class="exchange-name">
+                                <div class="exchange-logo">${exchange.logo}</div>
+                                ${exchange.name}
+                                ${badge}
+                            </div>
+                        </td>
+                        <td>
+                            <span class="rate-value ${row.flexible !== '—' ? 'rate-positive' : 'rate-na'}">${row.flexible}</span>
+                        </td>
+                        <td>
+                            <span class="rate-value ${row.locked !== '—' ? 'rate-positive' : 'rate-na'}">${row.locked}</span>
+                        </td>
+                        <td>
+                            <span class="lock-period ${row.lockPeriod === 'Flexible' ? 'lock-flexible' : ''}">${row.lockPeriod}</span>
+                        </td>
+                        <td>${row.product}</td>
+                        <td class="notes">${row.notes}</td>
+                    </tr>
+                `;
+            }).join('');
+        }
+
+        function renderDefiCards(data, token) {
+            if (!data || data.length === 0) {
+                // Check if this is TRX and show Tronsave specifically
+                if (token === 'TRX') {
+                    defiGrid.innerHTML = `
+                        <div class="defi-card">
+                            <div class="defi-card-header">
+                                <div class="defi-protocol">
+                                    <div class="defi-protocol-logo">TS</div>
+                                    <div>
+                                        <div class="defi-protocol-name">Tronsave</div>
+                                        <div class="defi-protocol-chain">TRON Network</div>
+                                    </div>
+                                </div>
+                                <div class="defi-apy">
+                                    <div class="defi-apy-value">21-25%</div>
+                                    <div class="defi-apy-label">APY Range</div>
+                                </div>
+                            </div>
+                            <div class="defi-details">
+                                <div class="defi-detail">
+                                    <div class="defi-detail-label">Type</div>
+                                    <div class="defi-detail-value">Energy Lending</div>
+                                </div>
+                                <div class="defi-detail">
+                                    <div class="defi-detail-label">Min. Stake</div>
+                                    <div class="defi-detail-value">50,000 TRX</div>
+                                </div>
+                                <div class="defi-detail">
+                                    <div class="defi-detail-label">Lock Period</div>
+                                    <div class="defi-detail-value">14-day unstake</div>
+                                </div>
+                                <div class="defi-detail">
+                                    <div class="defi-detail-label">Notes</div>
+                                    <div class="defi-detail-value">Lend staked TRX energy to other users</div>
+                                </div>
+                            </div>
+                        </div>
+                    `;
+                    return;
+                }
+
+                defiGrid.innerHTML = `
+                    <div class="no-data" style="grid-column: 1 / -1;">
+                        <div class="no-data-icon">🔍</div>
+                        <p>No DeFi opportunities found for this token</p>
+                        <p style="font-size: 12px; margin-top: 8px;">Check <a href="https://defillama.com/yields" target="_blank" style="color: var(--accent-blue);">DefiLlama Yields</a> for more options</p>
+                    </div>
+                `;
+                return;
+            }
+
+            defiGrid.innerHTML = data.map(item => `
+                <div class="defi-card">
+                    <div class="defi-card-header">
+                        <div class="defi-protocol">
+                            <div class="defi-protocol-logo">${item.protocol.substring(0, 2).toUpperCase()}</div>
+                            <div>
+                                <div class="defi-protocol-name">${item.protocol}</div>
+                                <div class="defi-protocol-chain">${item.chain}</div>
+                            </div>
+                        </div>
+                        <div class="defi-apy">
+                            <div class="defi-apy-value">${item.apy}</div>
+                            <div class="defi-apy-label">${item.type}</div>
+                        </div>
+                    </div>
+                    <div class="defi-details">
+                        <div class="defi-detail">
+                            <div class="defi-detail-label">Underlying</div>
+                            <div class="defi-detail-value">${item.underlying}</div>
+                        </div>
+                        <div class="defi-detail">
+                            <div class="defi-detail-label">TVL</div>
+                            <div class="defi-detail-value">${item.tvl}</div>
+                        </div>
+                        <div class="defi-detail">
+                            <div class="defi-detail-label">Maturity</div>
+                            <div class="defi-detail-value">${item.maturity}</div>
+                        </div>
+                        <div class="defi-detail">
+                            <div class="defi-detail-label">Notes</div>
+                            <div class="defi-detail-value">${item.notes}</div>
+                        </div>
+                    </div>
+                </div>
+            `).join('');
+        }
+
+        function renderReferenceRate(data) {
+            if (!data) {
+                referenceSection.style.display = 'none';
+                return;
+            }
+
+            referenceSection.style.display = 'flex';
+            
+            // Add LIVE badge if this is live data
+            const badge = data.isLive 
+                ? ' <span class="data-badge data-badge-live" style="font-size: 10px; vertical-align: middle;">LIVE</span>'
+                : ' <span class="data-badge data-badge-est" style="font-size: 10px; vertical-align: middle;">EST</span>';
+            
+            refName.innerHTML = data.name + badge;
+            refRate.textContent = data.rate;
+            refDescription.textContent = data.description;
+        }
+
+        function updateDisplay(token) {
+            const data = sampleRates[token] || { cex: defaultRates.cex, defi: defaultRates.defi };
+            
+            renderReferenceRate(data.referenceRate);
+            renderCexTable(data.cex);
+            renderDefiCards(data.defi, token);
+            
+            lastUpdated.textContent = new Date().toLocaleString();
+        }
+
+        // Simulate API refresh
+        async function refreshRates() {
+            refreshBtn.classList.add('loading');
+            
+            // Simulate network delay
+            await new Promise(resolve => setTimeout(resolve, 1500));
+            
+            updateDisplay(tokenSelect.value);
+            refreshBtn.classList.remove('loading');
+        }
+
+        // Event listeners
+        tokenSelect.addEventListener('change', (e) => {
+            updateDisplay(e.target.value);
+        });
+
+        refreshBtn.addEventListener('click', refreshRates);
+
+        // Initial load
+        updateDisplay(tokenSelect.value);
+        
+        // Fetch live Pendle data
+        async function fetchLivePendleData() {
+            try {
+                const response = await fetch(`${WORKER_URL}/pendle`);
+                const data = await response.json();
+                return data.markets || [];
+            } catch (error) {
+                console.error('Error fetching Pendle data:', error);
+                return [];
+            }
+        }
+        
+        // Fetch live DefiLlama data
+        async function fetchLiveDefiLlamaData() {
+            try {
+                const response = await fetch(`${WORKER_URL}/defillama`);
+                const data = await response.json();
+                return data.pools || [];
+            } catch (error) {
+                console.error('Error fetching DefiLlama data:', error);
+                return [];
+            }
+        }
+        
+        // Fetch live Bybit data
+        async function fetchLiveBybitData() {
+            try {
+                const response = await fetch(`${WORKER_URL}/bybit`);
+                const data = await response.json();
+                return data.products || [];
+            } catch (error) {
+                console.error('Error fetching Bybit data:', error);
+                return [];
+            }
+        }
+        
+        // Fetch all network staking reference rates
+        async function fetchNetworkRates() {
+            try {
+                const response = await fetch(`${WORKER_URL}/network-rates`);
+                const data = await response.json();
+                return data.rates || {};
+            } catch (error) {
+                console.error('Error fetching network rates:', error);
+                return {};
+            }
+        }
+        
+        // Map token symbols to search terms for filtering Pendle/DefiLlama data
+        const tokenSearchTerms = {
+            'ETH': ['eth', 'steth', 'wsteth', 'weeth', 'eeth', 'reth', 'cbeth'],
+            'BTC': ['btc', 'wbtc', 'tbtc', 'lbtc', 'ebtc'],
+            'SOL': ['sol', 'msol', 'jitosol', 'bsol'],
+            'TRX': ['trx', 'tron'],
+            'ATOM': ['atom', 'statom'],
+            'DOT': ['dot', 'ldot'],
+            'ADA': ['ada'],
+            'AVAX': ['avax', 'savax'],
+            'NEAR': ['near'],
+            'DOGE': ['doge'],
+            'LINK': ['link'],
+            'UNI': ['uni'],
+            'POL': ['pol', 'matic'],
+            'SHIB': ['shib'],
+            'XRP': ['xrp'],
+            'DYDX': ['dydx'],
+            'EIGEN': ['eigen'],
+            'AR': ['ar'],
+            'MNT': ['mnt'],
+            'WLD': ['wld']
+        };
+        
+        // Filter Pendle markets by token
+        function filterPendleByToken(markets, token) {
+            const searchTerms = tokenSearchTerms[token] || [token.toLowerCase()];
+            return markets.filter(market => {
+                const name = market.name.toLowerCase();
+                return searchTerms.some(term => name.includes(term));
+            });
+        }
+        
+        // Filter DefiLlama pools by token
+        function filterDefiLlamaByToken(pools, token) {
+            const searchTerms = tokenSearchTerms[token] || [token.toLowerCase()];
+            return pools.filter(pool => {
+                const symbol = pool.symbol.toLowerCase();
+                return searchTerms.some(term => symbol.includes(term));
+            });
+        }
+        
+        // Update the refresh function to load live data
+        async function refreshRatesLive() {
+            refreshBtn.classList.add('loading');
+            
+            const token = tokenSelect.value;
+            
+            // Fetch all live data in parallel
+            const [pendleMarkets, defillamaPools, bybitProducts, networkRates] = await Promise.all([
+                fetchLivePendleData(),
+                fetchLiveDefiLlamaData(),
+                fetchLiveBybitData(),
+                fetchNetworkRates()
+            ]);
+            
+            // Update reference rate from network rates API
+            const tokenRate = networkRates[token];
+            if (tokenRate && tokenRate.rate) {
+                const descriptions = {
+                    'ETH': `Average daily return across all Ethereum validators (${tokenRate.source})`,
+                    'SOL': `Solana network inflation rate going to validators (${tokenRate.source})`,
+                    'ATOM': `Cosmos Hub staking APR based on inflation/staked ratio (${tokenRate.source})`,
+                    'TRX': `TRON DPoS validator staking reward (${tokenRate.source})`,
+                    'DOT': `Polkadot NPoS staking reward (${tokenRate.source})`,
+                    'ADA': `Cardano epoch staking reward (${tokenRate.source})`,
+                    'AVAX': `Avalanche PoS validation reward (${tokenRate.source})`,
+                    'NEAR': `NEAR Protocol staking reward (${tokenRate.source})`
+                };
+                const names = {
+                    'ETH': 'ETH.STORE®',
+                    'SOL': 'Solana Inflation',
+                    'ATOM': 'Cosmos Hub APR',
+                    'TRX': 'TRON DPoS',
+                    'DOT': 'Polkadot NPoS',
+                    'ADA': 'Cardano Staking',
+                    'AVAX': 'Avalanche PoS',
+                    'NEAR': 'NEAR Staking'
+                };
+                renderReferenceRate({
+                    name: names[token] || `${token} Network Rate`,
+                    rate: tokenRate.rate,
+                    description: descriptions[token] || `Network staking rate from ${tokenRate.source}`,
+                    isLive: true
+                });
+            } else {
+                // Use static reference rates for tokens without live API
+                const staticData = sampleRates[token];
+                if (staticData?.referenceRate) {
+                    renderReferenceRate({
+                        ...staticData.referenceRate,
+                        isLive: false
+                    });
+                } else {
+                    renderReferenceRate(null);
+                }
+            }
+            
+            // Update CEX table with Bybit live data
+            updateCexWithBybit(token, bybitProducts);
+            
+            // Filter DeFi data by selected token
+            const filteredPendle = filterPendleByToken(pendleMarkets, token);
+            const filteredDefillama = filterDefiLlamaByToken(defillamaPools, token);
+            
+            // Convert to unified format for display
+            const defiOpportunities = [];
+            
+            // Add Pendle markets
+            filteredPendle.slice(0, 5).forEach(market => {
+                defiOpportunities.push({
+                    protocol: 'Pendle',
+                    chain: market.chain,
+                    apy: market.impliedApy,
+                    type: 'Fixed Yield (PT)',
+                    maturity: market.expiry ? new Date(market.expiry).toLocaleDateString('en-US', { month: 'short', year: 'numeric' }) : '—',
+                    tvl: market.tvl,
+                    underlying: market.name,
+                    notes: `Underlying APY: ${market.underlyingApy}`
+                });
+            });
+            
+            // Add DefiLlama pools - filter out very low APY and format notes properly
+            filteredDefillama
+                .filter(pool => parseFloat(pool.apy) >= 0.5) // Only show pools with >= 0.5% APY
+                .slice(0, 5)
+                .forEach(pool => {
+                    // Build notes string, handling undefined values
+                    let notes = '';
+                    if (pool.apyBase && pool.apyBase !== 'undefined%') {
+                        notes = `Base: ${pool.apyBase}`;
+                        if (pool.apyReward && pool.apyReward !== 'undefined%' && pool.apyReward !== 'null%') {
+                            notes += `, Reward: ${pool.apyReward}`;
+                        }
+                    }
+                    
+                    defiOpportunities.push({
+                        protocol: pool.protocol,
+                        chain: pool.chain,
+                        apy: pool.apy,
+                        type: 'Yield Pool',
+                        maturity: '—',
+                        tvl: pool.tvl,
+                        underlying: pool.symbol,
+                        notes: notes
+                    });
+                });
+            
+            // Special case: Add Tronsave for TRX
+            if (token === 'TRX') {
+                defiOpportunities.unshift({
+                    protocol: 'Tronsave',
+                    chain: 'TRON',
+                    apy: '21-25%',
+                    type: 'Energy Lending',
+                    maturity: '—',
+                    tvl: '$15M',
+                    underlying: 'TRX',
+                    notes: 'Lend staked TRX energy to other users. Min: 50,000 TRX'
+                });
+            }
+            
+            renderDefiCards(defiOpportunities, token);
+            lastUpdated.textContent = new Date().toLocaleString();
+            
+            refreshBtn.classList.remove('loading');
+        }
+        
+        // Update CEX table with live Bybit data
+        function updateCexWithBybit(token, bybitProducts) {
+            // Get static data for the token
+            const staticData = sampleRates[token]?.cex || defaultRates.cex;
+            
+            // Check if we got any Bybit data at all (API is working)
+            const bybitApiWorking = bybitProducts && bybitProducts.length > 0;
+            
+            // Find Bybit rates for this token from live data
+            const bybitRates = bybitProducts.filter(p => 
+                p.coin.toUpperCase() === token.toUpperCase()
+            );
+            
+            // Find best flexible and locked rates from Bybit
+            let bybitFlexible = null;
+            let bybitLocked = null;
+            
+            bybitRates.forEach(rate => {
+                const apr = rate.apr;
+                if (rate.category === 'FlexibleSaving') {
+                    bybitFlexible = apr;
+                } else if (rate.category === 'OnChain') {
+                    bybitLocked = apr;
+                }
+            });
+            
+            // Update the static data with live Bybit rates and mark data sources
+            const updatedCex = staticData.map(row => {
+                if (row.exchange === 'bybit') {
+                    if (bybitFlexible || bybitLocked) {
+                        // We have live data for this token
+                        return {
+                            ...row,
+                            flexible: bybitFlexible || '—',
+                            locked: bybitLocked || '—',
+                            isLive: true,
+                            notes: 'Real-time from Bybit API'
+                        };
+                    } else if (bybitApiWorking) {
+                        // API works but no product for this token
+                        return {
+                            ...row,
+                            flexible: '—',
+                            locked: '—',
+                            isLive: true,
+                            notes: 'Not available on Bybit Earn'
+                        };
+                    }
+                }
+                // All other exchanges are estimates
+                return {
+                    ...row,
+                    isLive: false
+                };
+            });
+            
+            renderCexTable(updatedCex);
+        }
+        
+        // Override the refresh button to use live data
+        refreshBtn.removeEventListener('click', refreshRates);
+        refreshBtn.addEventListener('click', refreshRatesLive);
+        
+        // Load live data on token change
+        tokenSelect.addEventListener('change', async (e) => {
+            await refreshRatesLive();
+        });
+        
+        // Initial load of live data
+        refreshRatesLive();
+    </script>
+</body>
+</html>
